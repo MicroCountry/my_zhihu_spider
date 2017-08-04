@@ -9,6 +9,7 @@ import redis
 from lxml import html
 import re
 from multiprocessing.dummy import Pool
+import time
 from mongodbs import Zhihu_User_Profile
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -26,19 +27,31 @@ class Spider():
         self.header = {}
         self.header["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:54.0) Gecko/20100101 Firefox/54.0"
         self.cookies = {
-            "q_c1": "=fa7be38aa96544b1ac3d3fb6c1538971|1499914412000|1483015223000",
-            "d_c0": "AJACTMq5EguPTkQ_iRg2bEN8SRcDRt-r35E=|1483015224",
-            "__utma": "51854390.897571603.1501758969.1501758969.1501758969.1",
-            "__utmz": "51854390.1501758969.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none)",
-            "_zap": "f4737b72-343c-40ad-9c98-37509a9bfedd",
-            "q_c1": "fa7be38aa96544b1ac3d3fb6c1538971|1499914412000|1483015223000",
-            "r_cap_id": "Y2UyZDM2NmZmYzQ5NDRhNDg4M2VmODE2M2QyYmY2OWI=|1501736351|502679beb3e669a2d29759cc0649a267d4b35f76",
-            "cap_id": "ZjY4YWRlMzA0NGVlNDkyMDgxY2FkYTk2NjMyNjhkNDU=|1501736351|8a8b387193ecbf73eaf067e9b08efa17684cc4ad",
-            "z_c0": "Mi4wQUJBTXY0bEZtd2dBa0FKTXlya1NDeGNBQUFCaEFsVk5wenFxV1FBVmxBZ1NNRktFcTRCWnZ2Yk9ESUdZM25BaGV3|1501736359|af0689b40970ddce49f7779e21229e611831b44e",
-            "__utmv": "51854390.100-1|2=registration_date=20150827=1^3=entry_date=20150827=1"
+            "q_c1":"fa7be38aa96544b1ac3d3fb6c1538971|1499914412000|1483015223000",
+            "d_c0":"AJACTMq5EguPTkQ_iRg2bEN8SRcDRt-r35E=|1483015224",
+            "__utma":"51854390.1211345587.1501807644.1501830767.1501850851.6",
+            "__utmz":"51854390.1501850851.6.2.utmcsr=zhihu.com|utmccn=(referral)|utmcmd=referral|utmcct=/",
+            "_zap":"f4737b72-343c-40ad-9c98-37509a9bfedd",
+            "q_c1":"fa7be38aa96544b1ac3d3fb6c1538971|1499914412000|1483015223000",
+            "cap_id":"M2Y3MTQ5YmJjZTM3NDg4Y2JiZDdmZGZjNzQyOTYzZWY=|1501852381|dba9c86c422b69eca236f4cdf616c5292124dbb7",
+            "_xsrf":"7a8351fb3a3e387369d8bdfe8afd6120",
+            "__utmv":"51854390.000--|2=registration_date=20150827=1^3=entry_date=20161229=1",
+            "aliyungf_tc":"AQAAAK5S9DLCxwMAtf70ZfT9IyG7Usg7",
+            "_xsrf":"7a8351fb3a3e387369d8bdfe8afd6120",
+            "anc_cap_id":"c5d51ffdeab443c3855c698f397677b3",
+            "__utmb":"51854390.0.10.1501850851",
+            "__utmc":"51854390",
+            "l_cap_id":"YmI5ODkyOTUyMTkyNDlhNGFiNmJmYzVkYzkyNjJjNjc=|1501852381|f649166aff12151902f98f099b07f063a018a6c8",
+            "auth_type":"cXFjb25u|1501852438|587fb292ca436760260f9a8006a00ff728866723",
+            "atoken":"AE030245440FF4CCDB56A733303F6583",
+            "atoken_expired_in":"7776000",
+            "token":"QUUwMzAyNDU0NDBGRjRDQ0RCNTZBNzMzMzAzRjY1ODM=|1501852438|df6fdabc0eaefc72db1e9b4dfbfb47227bfb80aa",
+            "client_id":"N0Q5RjhCNDRGOUI1RDUwQTdBNkIyRTZBNjkwQzkyNDc=|1501852438|2379214c81d4f275ba0db3359a8f6439f5d489cc",
+            "z_c0":"Mi4wQUNDQ0VSNXNLd3dBa0FKTXlya1NDeGNBQUFCaEFsVk5KUUNzV1FCajVpeW9Gc0VLZmgzNkZKV01zeGdBbHAydHhB|1501852453|938f57cd161ec8278ca7674c447cffbb659c317e",
+            "unlock_ticket":"QUNDQ0VSNXNLd3dYQUFBQVlRSlZUUzE2aEZtUFZMLVJpYzlGWDhZX2lXRklpX19LNDRHMXpRPT0=|1501852453|40afa3ed0a7fb2c025ab5d37ba59262e4b3a1246"
         }
 
-    def get_user_data(self):
+    def get_user_followers_data(self):
         followee_url = self.url + "/followers"
         try:
             get_html = requests.get(followee_url,cookies=self.cookies,
@@ -49,7 +62,20 @@ class Spider():
         txt = get_html.text
         content = get_html.content
         if get_html.status_code == 200:
-            self.analy_profile(txt,content)
+            self.analy_followers_profile(txt,content)
+            return
+
+    def get_user_following_data(self):
+        followee_url = self.url + "/following"
+        try:
+            get_html = requests.get(followee_url,cookies=self.cookies,
+                                    headers=self.header,verify=False)
+        except:
+            print "requests get error !"
+            return
+        txt = get_html.text
+        if get_html.status_code == 200:
+            self.analy_following_profile(txt)
             return
 
     def get_xpath_source(self,source):
@@ -61,7 +87,16 @@ class Spider():
         else:
             return ''
 
-    def analy_profile(self,html_text,content):
+    def analy_following_profile(self,html_text):
+        tree = html.fromstring(html_text)
+        url_list = tree.xpath("//h2[@class='ContentItem-title']//span[@class='UserLink UserItem-name']//a[@class='UserLink-link']/@href")
+        for target_url in url_list:
+            target_url = "https://www.zhihu.com" + target_url
+            target_url = target_url.replace("https", "http")
+            if red.sadd('red_had_spider', target_url):
+                red.lpush('red_to_spider', target_url)
+
+    def analy_followers_profile(self,html_text,content):
         tree = html.fromstring(html_text)
         self.user_name = self.get_xpath_source(tree.xpath("//span[@class='ProfileHeader-name']/text()"))
         male = tree.xpath("//div[@class='ProfileHeader-iconWrapper']//svg[@class='Icon Icon--male']")
@@ -81,12 +116,13 @@ class Spider():
         self.columns=self.get_xpath_source(tree.xpath("//div[@id='ProfileMain']//li[@aria-controls='Profile-columns']//span[@class='Tabs-meta']/text()"))
         self.pins=self.get_xpath_source(tree.xpath("//div[@id='ProfileMain']//li[@aria-controls='Profile-pins']//span[@class='Tabs-meta']/text()"))
         self.collections=self.get_xpath_source(tree.xpath("//div[@class='Menu']//a[@aria-controls='Profile-collections']//span[@class='Link-meta']/text()"))
-
+        global red
         try:
             self.user_followees = tree.xpath("//div[@class='Card FollowshipCard']//div[@class='NumberBoard-value']")[0].text
             self.user_followers = tree.xpath("//div[@class='Card FollowshipCard']//div[@class='NumberBoard-value']")[1].text
         except BaseException,e:
-            print "error...."
+            print "error...."+self.url
+            red.lpush('red_to_spider', self.url)
             return
 
         '''
@@ -112,8 +148,8 @@ class Spider():
             self.print_data_out()
         else:
             self.store_data_to_mongo()
-        global red
-        url_list = tree.xpath("//h2[@class='ContentItem-title']//a[@class='UserLink-link']/@href")
+
+        url_list = tree.xpath("//h2[@class='ContentItem-title']//span[@class='UserLink UserItem-name']//a[@class='UserLink-link']/@href")
         for target_url in url_list:
             target_url = "https://www.zhihu.com"+ target_url
             target_url = target_url.replace("https","http")
@@ -162,6 +198,7 @@ class Spider():
 def BFS_Search(option):
     global red
     while True:
+        time.sleep(2)
         temp = red.rpop('red_to_spider')
         if type(temp) == None:
             print "empty"
@@ -170,7 +207,9 @@ def BFS_Search(option):
             print "empty"
             break
         result = Spider(temp,option)
-        result.get_user_data()
+        result.get_user_followers_data()
+        result.get_user_following_data()
+
     return "ok"
 
 
