@@ -140,21 +140,21 @@ class Spider():
 
     def store_data_to_mongo(self):
         new_profile = Zhihu_User_Profile(
-            user_name=self.user_name,
-            user_number = self.number,
-            user_be_agreed=self.user_be_agreed,
-            user_be_thanked=self.user_be_thanked,
-            user_followees=self.user_followees,
-            user_followers=self.user_followers,
-            answers=self.answers,
-            asks=self.asks,
-            posts=self.posts,
-            columns=self.columns,
-            pins=self.pins,
-            collections=self.collections,
-            user_gender=self.user_gender,
-            collected=self.collected,
-            user_url=self.url
+            user_name=str(self.user_name),
+            user_number = str(self.number),
+            user_be_agreed=str(self.user_be_agreed),
+            user_be_thanked=str(self.user_be_thanked),
+            user_followees=str(self.user_followees),
+            user_followers=str(self.user_followers),
+            answers=str(self.answers),
+            asks=str(self.asks),
+            posts=str(self.posts),
+            columns=str(self.columns),
+            pins=str(self.pins),
+            collections=str(self.collections),
+            user_gender=str(self.user_gender),
+            collected=str(self.collected),
+            user_url=str(self.url)
         )
         new_profile.save()
         print "saved: %s \n" % self.user_name
