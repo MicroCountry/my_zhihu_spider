@@ -58,7 +58,7 @@ class Spider():
             get_html = requests.get(reqUrl, cookies=self.cookies,
                                     headers=self.header, verify=False)
         except Exception, e:
-            print "requests get error !" + e.message
+            print "requests get error !", e.message
             red.lpush('red_to_spider', self.url)
             return
         txt = get_html.text
@@ -78,7 +78,7 @@ class Spider():
             get_html = requests.get(reqUrl,
                                     headers=self.header, verify=False, proxies={"http": "http://{}".format(self.proxy)})
         except Exception, e:
-            print "requests get error !" + e.message
+            print "requests get error !", e.message
             red.lpush('red_to_spider', self.url)
             delete_proxy(self.proxy)
             return

@@ -1,0 +1,7 @@
+===proxy===
+requests get error ! HTTPConnectionPool(host='176.115.33.250', port=53281): Max retries exceeded with url: http://www.zhihu.com/people/max-yu-68/followers (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f2f9a8e2c90>: Failed to establish a new connection: [Errno 110] Connection timed out',)))
+saved: 宋宁世 
+
+requests get error ! HTTPConnectionPool(host='221.229.190.241', port=808): Max retries exceeded with url: http://www.zhihu.com/people/shan-qiu-zhi-zu/followers (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f2f99671550>: Failed to establish a new connection: [Errno 111] Connection refused',)))
+requests get error ! HTTPConnectionPool(host='221.229.190.241', port=808): Max retries exceeded with url: http://www.zhihu.com/people/shan-qiu-zhi-zu/following (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f2f99671c90>: Failed to establish a new connection: [Errno 111] Connection refused',)))
+requests get error ! HTTPConnectionPool(host='95.31.209.70', port=8080): Max retries exceeded with url: http://www.zhihu.com/people/zhu-yun-85/followers (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7f2f9a8e2e50>: Failed to establish a new connection: [Errno 110] Connection timed out',)))
