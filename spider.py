@@ -17,13 +17,14 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 class Spider():
-    def __init__(self,url,option="print_data_out"):
+    def __init__(self,url,option="print_data_out",proxy=None):
         self.url = url
         try:
             self.number =re.search("([\w|-]+)$",url).group(1)
         except:
             self.number=''
         self.option = option
+        self.proxy = proxy
         self.header = {}
         self.header["User-Agent"] = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:54.0) Gecko/20100101 Firefox/54.0"
         self.cookies = {
@@ -51,32 +52,60 @@ class Spider():
             "unlock_ticket":"QUNDQ0VSNXNLd3dYQUFBQVlRSlZUUzE2aEZtUFZMLVJpYzlGWDhZX2lXRklpX19LNDRHMXpRPT0=|1501852453|40afa3ed0a7fb2c025ab5d37ba59262e4b3a1246"
         }
 
-    def get_user_followers_data(self):
-        followee_url = self.url + "/followers"
+    def doRequestNoProxy(self, urlPath):
+        reqUrl = self.url + urlPath
         try:
-            get_html = requests.get(followee_url,cookies=self.cookies,
-                                    headers=self.header,verify=False)
-        except:
-            print "requests get error !"
+            get_html = requests.get(reqUrl, cookies=self.cookies,
+                                    headers=self.header, verify=False)
+        except Exception, e:
+            print "requests get error !" + e.message
+            red.lpush('red_to_spider', self.url)
             return
         txt = get_html.text
-        content = get_html.content
         if get_html.status_code == 200:
-            self.analy_followers_profile(txt,content)
+            if urlPath == "/following":
+                self.analy_following_profile(txt)
+            elif urlPath == "/followers":
+                content = get_html.content
+                self.analy_followers_profile(txt,content)
             return
+        else:
+            red.lpush('red_to_spider', self.url)
+
+    def doRequestProxy(self, urlPath):
+        reqUrl = self.url + urlPath
+        try:
+            get_html = requests.get(reqUrl,
+                                    headers=self.header, verify=False, proxies={"http": "http://{}".format(self.proxy)})
+        except Exception, e:
+            print "requests get error !" + e.message
+            red.lpush('red_to_spider', self.url)
+            delete_proxy(self.proxy)
+            return
+        txt = get_html.text
+        if get_html.status_code == 200:
+            if urlPath == "/following":
+                self.analy_following_profile(txt)
+            elif urlPath == "/followers":
+                content = get_html.content
+                self.analy_followers_profile(txt,content)
+            return
+        else:
+            red.lpush('red_to_spider', self.url)
+            delete_proxy(self.proxy)
+
+    def get_user_followers_data(self):
+        if type(self.proxy) == None or self.proxy is None:
+            self.doRequestNoProxy("/followers")
+        else:
+            self.doRequestProxy("/followers")
+
 
     def get_user_following_data(self):
-        followee_url = self.url + "/following"
-        try:
-            get_html = requests.get(followee_url,cookies=self.cookies,
-                                    headers=self.header,verify=False)
-        except:
-            print "requests get error !"
-            return
-        txt = get_html.text
-        if get_html.status_code == 200:
-            self.analy_following_profile(txt)
-            return
+        if type(self.proxy) == None or self.proxy is None:
+            self.doRequestNoProxy("/following")
+        else:
+            self.doRequestProxy("/following")
 
     def get_xpath_source(self,source):
         if len(source) <= 0:
@@ -195,18 +224,31 @@ class Spider():
         new_profile.save()
         print "saved: %s \n" % self.user_name
 
-def BFS_Search(option):
+def get_proxy():
+    return requests.get("http://127.0.0.1:5000/get/").content
+
+def delete_proxy(proxy):
+    requests.get("http://127.0.0.1:5000/delete/?proxy={}".format(proxy))
+
+def BFS_Search(option,proxyFlag='no'):
     global red
     while True:
-        time.sleep(2)
+        proxy = None
+        if proxyFlag == 'proxy':
+            proxy = get_proxy()
+            if type(proxy) == None:
+                print "proxy empty"
+                break
+            if proxy is None:
+                print "proxy empty"
+                break
+        else:
+            time.sleep(4)
         temp = red.rpop('red_to_spider')
-        if type(temp) == None:
-            print "empty"
+        if type(temp) == None or temp is None:
+            print "url empty"
             break
-        if temp is None:
-            print "empty"
-            break
-        result = Spider(temp,option)
+        result = Spider(temp,option,proxy)
         result.get_user_followers_data()
         result.get_user_following_data()
 
@@ -216,6 +258,8 @@ def BFS_Search(option):
 if __name__ == '__main__':
     try:
         option = sys.argv[1]
+        proxyFlag = sys.argv[2]
+        print "==="+proxyFlag+"==="
     except:
         print 'argv is not accepted'
         sys.exit()
@@ -223,7 +267,7 @@ if __name__ == '__main__':
     red.lpush('red_to_spider',"https://www.zhihu.com/people/tian-yuan-dong")
     #option = "print_data_out"
     #option = "db"
-    BFS_Search(option)
+    BFS_Search(option,proxyFlag)
 
     '''
     res = []
